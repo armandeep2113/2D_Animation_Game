@@ -1,0 +1,194 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <style>
+    #name
+    {
+      margin-left: 25px;
+    }
+    #field {
+      height: 200px;
+      border-bottom: 3px black groove;
+      position: relative;
+    }
+
+    #character {
+      position: absolute;
+      bottom: 0;
+      transform: scaleX(-1); /* Mirror horizontally */
+    }
+
+    .obstacle {
+      position: absolute;
+      bottom: 0;
+    }
+
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 24px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="field">
+    <img src="http://a.top4top.net/p_1990j031.gif" width="40" height="40" id="character">
+    <span id="score">0</span>
+  </div>
+ <footer> made by:
+  <div id="name">
+    ARMANDEEP SINGH 102103434
+    <BR>ANANYA GOEL 102103437
+  </div>
+    
+   </footer>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const character = document.getElementById('character');
+      const field = document.getElementById('field');
+      const scoreDisplay = document.getElementById('score');
+      const fieldRect = field.getBoundingClientRect();
+      const characterWidth = character.clientWidth;
+      const characterHeight = character.clientHeight;
+      const gravity = 0.5;
+      const jumpSpeed = -10;
+      const moveSpeed = 5;
+
+      let characterTop = fieldRect.height - characterHeight;
+      let characterLeft = 0;
+      let characterSpeedY = 0;
+      let characterSpeedX = 0;
+      let isJumping = false;
+      let score = 0;
+      let gameStopped = false;
+
+      function moveCharacter() {
+        characterSpeedY += gravity;
+        characterTop += characterSpeedY;
+        characterLeft += characterSpeedX;
+
+        // Apply collision with ground
+        if (characterTop >= fieldRect.height - characterHeight) {
+          characterTop = fieldRect.height - characterHeight;
+          characterSpeedY = 0;
+          isJumping = false;
+        }
+
+        // Apply collision with walls
+        if (characterLeft <= 0) {
+          characterLeft = 0;
+        } else if (characterLeft >= fieldRect.width - characterWidth) {
+          characterLeft = fieldRect.width - characterWidth;
+        }
+
+        character.style.top = characterTop + 'px';
+        character.style.left = characterLeft + 'px';
+      }
+
+      function jump() {
+        if (!isJumping) {
+          characterSpeedY = jumpSpeed;
+          isJumping = true;
+        }
+      }
+
+      function increaseScore() {
+        score++;
+        scoreDisplay.textContent = score; // Update score display
+      }
+
+      function createObstacle() {
+        if (gameStopped) return; // Stop creating obstacles if game is stopped
+
+        const obstacle = document.createElement('div');
+        obstacle.className = 'obstacle';
+        obstacle.style.left = fieldRect.width + 'px';
+        obstacle.style.width = '20px';
+        obstacle.style.height = '20px';
+        obstacle.style.backgroundColor = 'red';
+        field.appendChild(obstacle);
+
+        // Animate obstacle
+        let obstacleLeft = fieldRect.width;
+        const obstacleSpeedX = -3;
+
+        function moveObstacle() {
+          if (gameStopped) return; // Stop moving obstacle if game is stopped
+
+          obstacleLeft += obstacleSpeedX;
+          obstacle.style.left = obstacleLeft + 'px';
+
+          // Check collision with character
+          if (
+            characterLeft + characterWidth >= obstacleLeft &&
+            characterLeft <= obstacleLeft + obstacle.clientWidth &&
+            characterTop + characterHeight >= fieldRect.height - obstacle.clientHeight
+          ) {
+            // Collision detected
+            stopGame();
+            alert('Game Over! Score: ' + score);
+            return;
+          }
+
+          // Check if character jumps over obstacle
+          if (
+            characterTop < fieldRect.height - obstacle.clientHeight &&
+            characterLeft > obstacleLeft - characterWidth &&
+            characterLeft < obstacleLeft + obstacle.clientWidth
+          ) {
+            // Character successfully jumped over obstacle
+            increaseScore();
+          }
+
+          // Remove obstacle when it goes beyond the left boundary
+          if (obstacleLeft < -obstacle.clientWidth) {
+            field.removeChild(obstacle);
+            clearInterval(obstacleInterval);
+          }
+        }
+
+        const obstacleInterval = setInterval(moveObstacle, 16);
+      }
+
+      function stopGame() {
+        gameStopped = true;
+      }
+
+      function animate() {
+        if (!gameStopped) {
+          moveCharacter();
+          requestAnimationFrame(animate);
+        }
+      }
+
+      animate();
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'ArrowUp' || event.key === ' ') {
+          jump();
+        } else if (event.key === 'ArrowRight') {
+          characterSpeedX = moveSpeed;
+        } else if (event.key === 'ArrowLeft') {
+          characterSpeedX = -moveSpeed;
+        }
+      });
+
+      document.addEventListener('keyup', function (event) {
+        if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+          characterSpeedX = 0;
+        }
+      });
+
+      // Generate obstacles at regular intervals
+      setInterval(createObstacle, 2000);
+
+    });
+  </script>
+
+</body>
+
+</html>
